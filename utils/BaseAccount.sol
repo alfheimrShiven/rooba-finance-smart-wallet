@@ -42,11 +42,12 @@ abstract contract BaseAccount is IAccount {
         UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) external virtual override returns (uint256 validationData) {
+    ) external virtual override returns (bool) {
         _requireFromEntryPoint();
-        validationData = _validateSignature(userOp, userOpHash);
+        _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);
         _payPrefund(missingAccountFunds);
+        return true;
     }
 
     /**
@@ -64,18 +65,12 @@ abstract contract BaseAccount is IAccount {
      * @param userOp validate the userOp.signature field
      * @param userOpHash convenient field: the hash of the request, to check the signature against
      *          (also hashes the entrypoint and chain id)
-     * @return validationData signature and time-range of this operation
-     *      <20-byte> sigAuthorizer - 0 for valid signature, 1 to mark signature failure,
-     *         otherwise, an address of an "authorizer" contract.
-     *      <6-byte> validUntil - last timestamp this operation is valid. 0 for "indefinite"
-     *      <6-byte> validAfter - first timestamp this operation is valid
-     *      If the account doesn't use time-range, it is enough to return SIG_VALIDATION_FAILED value (1) for signature failure.
-     *      Note that the validation code cannot use block.timestamp (or block.number) directly.
+     * @return bool
      */
     function _validateSignature(
         UserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal virtual returns (uint256 validationData);
+    ) internal virtual returns (bool);
 
     /**
      * Validate the nonce of the UserOperation.

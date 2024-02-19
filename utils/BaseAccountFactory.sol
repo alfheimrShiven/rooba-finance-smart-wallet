@@ -4,7 +4,6 @@ pragma solidity ^0.8.12;
 // Utils
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./BaseAccount.sol";
 
 // Interface
 import "../interface/IEntrypoint.sol";
