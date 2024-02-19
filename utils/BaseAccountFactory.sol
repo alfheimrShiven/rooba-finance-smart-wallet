@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.12;
+pragma solidity 0.8.20;
 
 // Utils
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Interface
-import "../interface/IEntrypoint.sol";
+import {IEntryPoint} from "../interface/IEntryPoint.sol";
 
 abstract contract BaseAccountFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    event AccountCreated(
+        address indexed smartWalletAccount,
+        address indexed admin
+    );
 
     /*///////////////////////////////////////////////////////////////
                                 State
@@ -37,7 +42,7 @@ abstract contract BaseAccountFactory {
     function createAccount(
         address _admin,
         bytes calldata _data
-    ) external virtual override returns (address) {
+    ) external returns (address) {
         address impl = accountImplementation;
         bytes32 salt = _generateSalt(_admin, _data);
         address account = Clones.predictDeterministicAddress(impl, salt);
