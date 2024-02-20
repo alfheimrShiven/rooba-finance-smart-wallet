@@ -22,8 +22,17 @@ contract Account is AccountCore, ERC1271, ERC721Holder, ERC1155Holder {
     using ECDSA for bytes32;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    // Events //
+    event SmartWalletDeactivated(address indexed smartWallet, uint256 balance);
+    event SmartWalletActivated(address indexed smartWallet, uint256 balance);
+
+    // Errors //
+    error NotFactory(address sender);
+
     bytes32 private constant MSG_TYPEHASH =
         keccak256("AccountMessage(bytes message)");
+
+    bool public deactivated;
 
     /*///////////////////////////////////////////////////////////////
                     Constructor, Initializer, Modifiers
@@ -32,7 +41,9 @@ contract Account is AccountCore, ERC1271, ERC721Holder, ERC1155Holder {
     constructor(
         IEntryPoint _entrypoint,
         address _factory
-    ) AccountCore(_entrypoint, _factory) {}
+    ) AccountCore(_entrypoint, _factory) {
+        deactivated = false;
+    }
 
     /// @notice Checks whether the caller is the EntryPoint contract or the admin.
     modifier onlyAdminOrEntrypoint() virtual {
@@ -43,8 +54,29 @@ contract Account is AccountCore, ERC1271, ERC721Holder, ERC1155Holder {
         _;
     }
 
+    modifier onlyAdmin() {
+        if (!isAdmin(msg.sender)) {
+            revert NotAdmin(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyFactory() {
+        if (factory != msg.sender) {
+            revert NotFactory(msg.sender);
+        }
+        _;
+    }
+
+    modifier shouldBeActive() {
+        if (deactivated) {
+            revert("Smart Wallet is deactivated");
+        }
+        _;
+    }
+
     /// @notice Lets the account receive native tokens.
-    receive() external payable {}
+    receive() external payable shouldBeActive {}
 
     /*///////////////////////////////////////////////////////////////
                             View functions
@@ -89,7 +121,7 @@ contract Account is AccountCore, ERC1271, ERC721Holder, ERC1155Holder {
         address _target,
         uint256 _value,
         bytes calldata _calldata
-    ) external virtual onlyAdminOrEntrypoint {
+    ) external virtual onlyAdminOrEntrypoint shouldBeActive {
         _registerOnFactory();
         _call(_target, _value, _calldata);
     }
@@ -99,7 +131,7 @@ contract Account is AccountCore, ERC1271, ERC721Holder, ERC1155Holder {
         address[] calldata _target,
         uint256[] calldata _value,
         bytes[] calldata _calldata
-    ) external virtual onlyAdminOrEntrypoint {
+    ) external virtual onlyAdminOrEntrypoint shouldBeActive {
         _registerOnFactory();
 
         require(
@@ -110,6 +142,31 @@ contract Account is AccountCore, ERC1271, ERC721Holder, ERC1155Holder {
         for (uint256 i = 0; i < _target.length; i++) {
             _call(_target[i], _value[i], _calldata[i]);
         }
+    }
+
+    /// @dev Deactivates smart wallet
+    /// @dev Using a flag `deactivated` design pattern instead of `selfDestruct()` to deactivate the smart wallet, as it's considered a better practice. Ref: https://docs.soliditylang.org/en/v0.8.20/introduction-to-smart-contracts.html#deactivate-and-self-destruct
+    /// @notice Deactivates the smart wallet associated with the admin and transfers the tokens to AccountFactory. These funds will be restored on smart wallet activation.
+    function deactivateSmartWallet()
+        external
+        onlyAdminOrEntrypoint
+        shouldBeActive
+    {
+        deactivated = true;
+
+        // tranfer out all native tokens to admin (EOA)
+        emit SmartWalletDeactivated(address(this), address(this).balance);
+        (bool success, bytes memory data) = payable(factory).call{
+            value: address(this).balance
+        }("");
+        // Silence warning: Return value of low-level calls not used.
+        (success, data) = (success, data);
+    }
+
+    /// @dev Will be called by AccountFactory to reactivate the account and restore funds.
+    function activateSmartWallet() external payable onlyFactory {
+        deactivated = false;
+        emit SmartWalletActivated(address(this), address(this).balance);
     }
 
     /*///////////////////////////////////////////////////////////////

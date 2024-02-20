@@ -86,7 +86,7 @@ abstract contract BaseAccountFactory {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Returns whether an account is registered on this factory.
-    function isRegistered(address _account) external view returns (bool) {
+    function isRegistered(address _account) public view returns (bool) {
         return allAccounts.contains(_account);
     }
 
@@ -103,7 +103,7 @@ abstract contract BaseAccountFactory {
     /// @notice Returns the address of an Account that would be deployed with the given admin signer.
     function getAddress(
         address _admin,
-        bytes calldata _data
+        bytes memory _data
     ) public view virtual returns (address) {
         bytes32 salt = _generateSalt(_admin, _data);
         return Clones.predictDeterministicAddress(accountImplementation, salt);
