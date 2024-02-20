@@ -1,17 +1,15 @@
-## Foundry
+## Rooba Finance Smart Wallet 💳
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+**An ERC-4337 compatible smart wallet for Rooba Finance Users.**
+<br/>
 
-Foundry consists of:
+⚡️ The project provides a **non-bloated (no external SDK used) and extremely optimized** ERC-4337 smart account system customed made for Rooba Finance's specific requirements.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### Features
 
-## Documentation
-
-https://book.getfoundry.sh/
+-   **Issue Smart Wallets**: All Rooba Finance users can have access to smart wallets which will provide an invisible wallet experience to our users.
+-   **Wallet Deactivation**: Users can chose to deactivate their smart wallets whenever they chose to. Their ETH will be secured by our protocol and can be restored later.
+-   **Wallet Reactivation**: Users can chose to reactivate their smart wallets whenever they chose to with all ETH restored back.
 
 ## Usage
 
@@ -25,6 +23,12 @@ $ forge build
 
 ```shell
 $ forge test
+```
+
+### Deploy Account Factory
+
+```shell
+$ forge script script/DeployAccountFactory.s.sol:DeployAccountFactory
 ```
 
 ### Format
@@ -43,24 +47,4 @@ $ forge snapshot
 
 ```shell
 $ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
 ```
